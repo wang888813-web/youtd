@@ -1,3 +1,121 @@
+Skip to content
+
+wang888813-web
+youtd
+
+Type / to search
+
+
+
+Repository navigation
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+
+Files
+
+ main
+
+
+t
+api
+server.js
+index.html
+package.json
+vercel.json
+Editing server.js in youtd
+Breadcrumbsyoutd/api
+/
+
+in
+main
+Cancel changes
+
+Commit changes...
+
+Edit
+
+Preview
+
+Indent mode
+
+Indent size
+
+Line wrap mode
+
+Editing server.js file contents
+  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
 const express = require('express');
 const ytdl = require('ytdl-core');
 const cors = require('cors');
@@ -64,3 +182,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Service running on port ${PORT}`);
 });
+Use Control + Shift + m to toggle the tab key moving focus. Alternatively, use esc then tab to move to the next interactive element on the page.
