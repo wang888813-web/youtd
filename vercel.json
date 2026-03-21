@@ -1,12 +1,7 @@
 {
-  "build": {
-    "env": {
-      "NODEJS_AWS_HANDLER": "api/server.js"
-    }
-  },
   "functions": {
     "api/server.js": {
-      "runtime": "@vercel/node@3"
+      "runtime": "nodejs20.x"
     }
   },
   "routes": [
