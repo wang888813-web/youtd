@@ -3,63 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Downloader - Fast MP4 MP3 Download</title>
-  <meta name="description" content="Free YouTube Downloader, download YouTube videos to MP4 1080p 720p, MP3 320kbps, no login, no limit.">
+  <title>YouTube Downloader - Free MP4 MP3 Download</title>
+  <meta name="description" content="Free YouTube Downloader, no login, no limit, download YouTube videos to MP4 720p and MP3 320kbps online.">
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:Arial,sans-serif;background:#f8f9fa;padding:20px}
     .container{max-width:600px;margin:50px auto;background:white;padding:25px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
-    h2{color:#1a1a1a;margin-bottom:20px;text-align:center}
-    input{width:100%;padding:14px;margin:12px 0;border:1px solid #ddd;border-radius:8px;font-size:16px}
-    button{width:100%;padding:14px;background:#ff0000;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer}
+    h2{color:#ff0000;margin-bottom:20px;text-align:center}
+    input{width:100%;padding:14px;margin:12px 0;border:1px solid #ddd;border-radius:8px;font-size:16px;outline:none}
+    input:focus{border-color:#ff0000}
+    button{width:100%;padding:14px;background:#ff0000;color:white;border:none;border-radius:8px;font-size:16px;font-weight:bold;cursor:pointer;transition:background 0.3s}
     button:hover{background:#e60000}
-    .result{margin-top:25px}
+    .result{margin-top:25px;display:none}
+    .result.active{display:block}
     .result img{width:100%;border-radius:8px;margin:10px 0}
-    .result h3{font-size:18px;color:#222;margin-bottom:8px}
-    .download-btn{display:inline-block;margin:6px 4px;padding:10px 16px;background:#007bff;color:white;text-decoration:none;border-radius:8px;font-size:15px}
+    .result h3{font-size:18px;color:#222;margin-bottom:8px;word-break:break-all}
+    .download-btn{display:inline-block;margin:6px 4px;padding:10px 16px;background:#007bff;color:white;text-decoration:none;border-radius:8px;font-size:15px;transition:background 0.3s}
     .download-btn:hover{background:#0069d9}
+    .loading{text-align:center;padding:20px;color:#666}
     .disclaimer{margin-top:40px;font-size:12px;color:#777;line-height:1.5}
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Free YouTube Downloader</h2>
-    <input type="text" id="url" placeholder="Paste YouTube Video URL here">
-    <button onclick="getVideoInfo()">Analyze & Get Download Link</button>
+    <input type="text" id="url" placeholder="Paste YouTube Video URL here (youtube.com / youtu.be)">
+    <button onclick="getVideoInfo()">Analyze & Download</button>
+    <div class="loading" id="loading" style="display:none">Loading...</div>
     <div class="result" id="result"></div>
 
     <div class="disclaimer">
-      <p><strong>Disclaimer:</strong> This tool is for personal use only. We do NOT host, store, or distribute any copyrighted content. You must own the video or have the copyright owner's permission before downloading. We are not affiliated with YouTube LLC.</p>
+      <p><strong>Disclaimer:</strong> This tool is for personal use only. We do not host, store, or distribute any copyrighted content. You must own the video or have the copyright owner's permission before downloading. We are not affiliated with YouTube LLC.</p>
     </div>
   </div>
 
   <script>
+    // 提取YouTube视频ID
+    function getVideoId(url) {
+      if (url.includes('youtu.be/')) {
+        return url.split('youtu.be/')[1].split('?')[0];
+      } else if (url.includes('youtube.com/watch?v=')) {
+        return new URL(url).searchParams.get('v');
+      }
+      return '';
+    }
+    // 解析视频信息并生成下载链接
     async function getVideoInfo() {
       const url = document.getElementById('url').value.trim();
-      const resultBox = document.getElementById('result');
-      resultBox.innerHTML = "Loading...";
+      const loading = document.getElementById('loading');
+      const result = document.getElementById('result');
+      const input = document.getElementById('url');
 
-      if(!url){alert("Please paste a YouTube URL");resultBox.innerHTML="";return}
+      // 清空结果，隐藏结果框
+      result.innerHTML = '';
+      result.classList.remove('active');
 
-      try {
-        const response = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
-        const data = await response.json();
-        if(!data.success){alert(data.error);resultBox.innerHTML="";return}
-
-        resultBox.innerHTML = `
-          <h3>${data.title}</h3>
-          <img src="${data.thumbnail}" alt="video cover">
-          <p>Duration: ${data.duration}</p>
-          <div style="margin-top:10px">
-            <a class="download-btn" href="/api/download?url=${encodeURIComponent(url)}&type=mp4&quality=720p">MP4 720P</a>
-            <a class="download-btn" href="/api/download?url=${encodeURIComponent(url)}&type=mp3&quality=320k">MP3 320K</a>
-          </div>
-        `;
-      } catch(e){
-        alert("Service error, please try again later");
-        resultBox.innerHTML="";
+      // 验证URL
+      if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
+        alert("Please enter a valid YouTube URL (youtube.com or youtu.be)");
+        input.focus();
+        return;
       }
+
+      const videoId = getVideoId(url);
+      if (!videoId) {
+        alert("Invalid YouTube URL, please check and try again");
+        return;
+      }
+
+      // 显示加载
+      loading.style.display = 'block';
+      // 生成真实封面和下载链接（纯前端，无后端）
+      const thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+      const encodeUrl = encodeURIComponent(url);
+      // 稳定下载地址，无重定向循环
+      const mp4Url = `https://yt1s.io/en/convert?url=${encodeUrl}`;
+      const mp3Url = `https://yt1s.io/en/convert?url=${encodeUrl}&format=mp3`;
+
+      // 隐藏加载，显示结果
+      loading.style.display = 'none';
+      result.classList.add('active');
+      // 渲染结果
+      result.innerHTML = `
+        <h3>YouTube Video (ID: ${videoId})</h3>
+        <img src="${thumbnail}" alt="YouTube Video Thumbnail">
+        <div style="margin-top:15px">
+          <a class="download-btn" href="${mp4Url}" target="_blank" rel="noopener">MP4 720P (Online Download)</a>
+          <a class="download-btn" href="${mp3Url}" target="_blank" rel="noopener">MP3 320K (Online Download)</a>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:#666">Click the button to download directly (open in new tab)</p>
+      `;
     }
+    // 支持回车触发解析
+    document.getElementById('url').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') getVideoInfo();
+    });
   </script>
 </body>
 </html>
