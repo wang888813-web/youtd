@@ -3,41 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>YouTube Downloader</title>
-  <style>
-    body{text-align:center;padding:40px;font-family:Arial}
-    input{width:80%;padding:12px;margin:10px 0}
-    button{padding:12px 25px;background:red;color:white;border:none;border-radius:6px}
-    img{max-width:300px;margin:10px auto}
-  </style>
 </head>
 <body>
   <h1>YouTube Downloader</h1>
-  <input id="link" placeholder="粘贴YouTube链接">
-  <button onclick="go()">解析视频</button>
-  <div id="status"></div>
+  <input id="url" placeholder="粘贴链接">
+  <button onclick="parse()">解析</button>
   <div id="result"></div>
 
   <script>
-    async function go() {
-      let url = document.getElementById("link").value;
-      let s = document.getElementById("status");
-      s.innerText = "加载中...";
-
-      let res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
-      let data = await res.json();
-
-      if (!data.success) {
-        s.innerText = "解析失败！";
-        return;
-      }
-
-      s.innerText = "解析成功！";
-      document.getElementById("result").innerHTML = `
-        <img src="${data.thumbnail}">
-        <h3>${data.title}</h3>
-        <button onclick="window.open('${data.mp4}')">下载MP4</button>
-        <button onclick="window.open('${data.mp3}')">下载MP3</button>
-      `;
+    async function parse() {
+      const url = document.getElementById("url").value;
+      const res = await fetch(`/api?url=${encodeURIComponent(url)}`);
+      const data = await res.json();
+      document.getElementById("result").innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
     }
   </script>
 </body>
