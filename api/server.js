@@ -5,63 +5,87 @@ const app = express();
 
 app.use(cors());
 
-// ==================== 你的 ZYLA API KEY ====================
+// 你的 Zyla API Key（完整正确）
 const API_KEY = "12934|tlS49CLwKweh4tFinxj5jYPERcxIMSTTJ49w0knm";
-// ===========================================================
 
-// 解析视频 + 获取下载地址（完全按官方 curl 写的）
+// 主解析接口（自动处理异步进度）
 app.get('/api/info', async (req, res) => {
   try {
     const url = req.query.url;
     if (!url) return res.json({ success: false, error: "Please enter URL" });
 
-    // ✅ 完全按照你给的 curl 命令写的！1:1复刻
-    const response = await axios({
+    // ========== 第一步：提交任务 ==========
+    const taskRes = await axios({
       method: 'GET',
       url: 'https://zylalabs.com/api/11016/youtube+download+and+info+api/20761/download',
-      headers: {
-        'Authorization': 'Bearer ' + API_KEY  // ✅ 官方要求：Bearer + Key
-      },
-      params: {
-        url: url,       // 视频链接
-        format: 'mp4'   // 格式 mp4
-      }
+      headers: { 'Authorization': 'Bearer ' + API_KEY },
+      params: { url, format: 'mp4' }
     });
 
-    const data = response.data;
+    const progressUrl = taskRes.data.progress_url;
+    const thumbnail = taskRes.data.image;
 
+    if (!progressUrl) return res.json({ success: false, error: "Error" });
+
+    // ========== 第二步：循环查进度 ==========
+    let downloadLink = null;
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      const progress = await axios.get(progressUrl);
+
+      if (progress.data.status === "finished") {
+        downloadLink = progress.data.download_link;
+        break;
+      }
+    }
+
+    if (!downloadLink) {
+      return res.json({ success: false, error: "Processing timeout" });
+    }
+
+    // ========== 第三步：返回给前端 ==========
     return res.json({
       success: true,
-      title: data.title || "YouTube Video",
-      thumbnail: data.thumbnail || "",
-      duration: data.duration || "0",
-      mp4: data.downloadLink || "",
-      mp3: data.downloadLink || ""
+      title: "YouTube Video",
+      thumbnail: thumbnail,
+      mp4: downloadLink,
+      mp3: downloadLink
     });
 
-  } catch (error) {
-    console.error("错误:", error.response?.data || error.message);
-    return res.json({ success: false, error: "Parsing failed, try another video" });
+  } catch (err) {
+    console.error(err.message);
+    return res.json({ success: false, error: "Parsing failed" });
   }
 });
 
 // 下载接口
 app.get('/api/download', async (req, res) => {
   try {
-    const { url, type } = req.query;
-    const format = type || 'mp4';
+    const { url } = req.query;
+    if (!url) return res.status(400).send("URL missing");
 
-    const { data } = await axios({
+    const task = await axios({
       method: 'GET',
       url: 'https://zylalabs.com/api/11016/youtube+download+and+info+api/20761/download',
       headers: { 'Authorization': 'Bearer ' + API_KEY },
-      params: { url, format }
+      params: { url, format: 'mp4' }
     });
 
-    res.redirect(data.downloadLink);
+    let link = null;
+    for (let i = 0; i < 25; i++) {
+      await new Promise(r => setTimeout(r, 1500));
+      const p = await axios.get(task.data.progress_url);
+      if (p.data.status === "finished") {
+        link = p.data.download_link;
+        break;
+      }
+    }
 
-  } catch (err) {
-    res.status(500).send("Download error");
+    if (!link) return res.status(500).send("Timeout");
+    res.redirect(link);
+
+  } catch (e) {
+    res.status(500).send("Error");
   }
 });
 
