@@ -1,49 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>YouTube Downloader</title>
-<style>
-  body{text-align:center;padding:40px;font-family:Arial}
-  input{width:80%;padding:12px;font-size:16px;margin:10px 0}
-  button{padding:12px 30px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
-  #status{margin:15px 0}
-  img{max-width:320px;margin:10px auto;border-radius:10px}
-  .down{background:red;color:white;padding:10px 20px;margin:5px;border:none;border-radius:6px;cursor:pointer}
-</style>
+  <meta charset="UTF-8">
+  <title>YouTube Downloader</title>
+  <style>
+    body{text-align:center;padding:40px;font-family:Arial}
+    input{width:80%;padding:12px;margin:10px 0}
+    button{padding:12px 25px;background:red;color:white;border:none;border-radius:6px}
+    img{max-width:300px;margin:10px auto}
+  </style>
 </head>
 <body>
   <h1>YouTube Downloader</h1>
-  <input id="url" placeholder="Paste YouTube URL">
-  <button onclick="parse()">Parse</button>
+  <input id="link" placeholder="粘贴YouTube链接">
+  <button onclick="go()">解析视频</button>
   <div id="status"></div>
   <div id="result"></div>
 
   <script>
-    async function parse() {
-      const url = document.getElementById("url").value;
-      if (!url) return alert("Enter URL");
-      setStatus("Loading...");
+    async function go() {
+      let url = document.getElementById("link").value;
+      let s = document.getElementById("status");
+      s.innerText = "加载中...";
 
-      const res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
-      const data = await res.json();
+      let res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
+      let data = await res.json();
 
       if (!data.success) {
-        setStatus("Failed ❌");
+        s.innerText = "解析失败！";
         return;
       }
 
-      setStatus("Success ✅");
+      s.innerText = "解析成功！";
       document.getElementById("result").innerHTML = `
         <img src="${data.thumbnail}">
         <h3>${data.title}</h3>
-        <button class="down" onclick="window.open('${data.mp4}')">Download MP4</button>
-        <button class="down" onclick="window.open('${data.mp3}')">Download MP3</button>
+        <button onclick="window.open('${data.mp4}')">下载MP4</button>
+        <button onclick="window.open('${data.mp3}')">下载MP3</button>
       `;
-    }
-
-    function setStatus(text) {
-      document.getElementById("status").innerText = text;
     }
   </script>
 </body>
