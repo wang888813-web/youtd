@@ -9,42 +9,32 @@ app.use(cors());
 const API_KEY = "12934|tlS49CLwKweh4tFinxj5jYPERcxIMSTTJ49w0";
 // ===========================================================
 
-// 统一错误处理的解析接口
+// 解析接口（正确 Zyla 调用方式）
 app.get('/api/info', async (req, res) => {
   try {
     const url = req.query.url;
-    if (!url) {
-      return res.json({ success: false, error: "Please enter YouTube URL" });
-    }
+    if (!url) return res.json({ success: false, error: "Please enter URL" });
 
-    // 调用 Zyla API
-    const response = await axios({
-      method: 'GET',
-      url: 'https://api.zylalabs.com/YouTubeDownloadAndInfo',
-      headers: {
-        'Authorization': 'Bearer ' + API_KEY
-      },
+    // ✅ Zyla 正确请求地址 + 传参方式
+    const { data } = await axios.get("https://api.zylalabs.com/YouTubeDownloadAndInfo", {
       params: {
-        url: url
-      },
-      timeout: 15000
+        url: url,
+        apikey: API_KEY  // ✅ 不是 Bearer！是直接传 apikey！
+      }
     });
 
-    const data = response.data;
-
-    // 返回前端能识别的格式
+    // ✅ Zyla 正确返回字段
     return res.json({
       success: true,
-      title: data.title || 'YouTube Video',
-      thumbnail: data.thumbnail || '',
-      duration: (data.duration || 0) + 's',
-      mp4: data.downloadUrls?.mp4 || '',
-      mp3: data.downloadUrls?.mp3 || ''
+      title: data.title || "YouTube Video",
+      thumbnail: data.thumbnail || "",
+      duration: data.duration || "0",
+      mp4: data.download_url || "",
+      mp3: data.download_url || ""
     });
 
   } catch (error) {
-    console.error('API Error:', error.message);
-    // 返回友好错误，不爆500
+    console.error("ERROR", error.response?.data || error.message);
     return res.json({
       success: false,
       error: "Parsing failed, please try another video"
@@ -55,21 +45,13 @@ app.get('/api/info', async (req, res) => {
 // 下载接口
 app.get('/api/download', async (req, res) => {
   try {
-    const { url, type } = req.query;
-    if (!url) return res.status(400).send("URL required");
-
-    const { data } = await axios.get('https://api.zylalabs.com/YouTubeDownloadAndInfo', {
-      headers: { 'Authorization': 'Bearer ' + API_KEY },
-      params: { url }
+    const { url } = req.query;
+    const { data } = await axios.get("https://api.zylalabs.com/YouTubeDownloadAndInfo", {
+      params: { url, apikey: API_KEY }
     });
-
-    const link = type === 'mp3' ? (data.downloadUrls?.mp3 || '') : (data.downloadUrls?.mp4 || '');
-    if (!link) return res.status(404).send("Download link not available");
-
-    return res.redirect(link);
-
+    res.redirect(data.download_url);
   } catch (err) {
-    return res.status(500).send("Download service error");
+    res.status(500).send("Download error");
   }
 });
 
