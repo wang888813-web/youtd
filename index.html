@@ -1,75 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>YouTube Downloader</title>
-  <style>
-    body{text-align:center;padding:40px;font-family:Arial}
-    input{width:80%;padding:12px;font-size:16px;margin:10px 0}
-    button{padding:12px 30px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
-    #status{color:#666;margin:15px 0}
-    #thumbnail{max-width:320px;margin:20px auto;border-radius:10px}
-    .download-btn{background:#ff0000;color:#fff;margin:5px;padding:10px 25px}
-  </style>
+<meta charset="UTF-8">
+<title>YouTube Downloader</title>
+<style>
+  body{text-align:center;padding:40px;font-family:Arial}
+  input{width:80%;padding:12px;font-size:16px;margin:10px 0}
+  button{padding:12px 30px;background:#000;color:#fff;border:none;border-radius:6px;cursor:pointer}
+  #status{margin:15px 0}
+  img{max-width:320px;margin:10px auto;border-radius:10px}
+  .down{background:red;color:white;padding:10px 20px;margin:5px;border:none;border-radius:6px;cursor:pointer}
+</style>
 </head>
 <body>
   <h1>YouTube Downloader</h1>
-  <input id="videoUrl" placeholder="Paste YouTube URL">
-  <button onclick="startParse()">Parse Video</button>
-
+  <input id="url" placeholder="Paste YouTube URL">
+  <button onclick="parse()">Parse</button>
   <div id="status"></div>
-  <img id="thumbnail" style="display:none">
-  <div id="downloadArea"></div>
+  <div id="result"></div>
 
   <script>
-    let progressUrl = "";
-    let thumbnail = "";
-
-    async function startParse() {
-      const url = document.getElementById("videoUrl").value;
+    async function parse() {
+      const url = document.getElementById("url").value;
       if (!url) return alert("Enter URL");
+      setStatus("Loading...");
 
-      setStatus("Creating task...");
-      document.getElementById("downloadArea").innerHTML = "";
-
-      // 创建任务
-      const res = await fetch(`/api/create-task?url=${encodeURIComponent(url)}`);
+      const res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
       const data = await res.json();
 
       if (!data.success) {
-        setStatus("Parse failed ❌");
+        setStatus("Failed ❌");
         return;
       }
 
-      progressUrl = data.progress_url;
-      thumbnail = data.thumbnail;
-      document.getElementById("thumbnail").src = thumbnail;
-      document.getElementById("thumbnail").style.display = "block";
-
-      setStatus("Processing video... Please wait");
-      startPolling();
-    }
-
-    // 自动轮询进度（前端轮询 = Vercel 永不超时）
-    function startPolling() {
-      const interval = setInterval(async () => {
-        const res = await fetch(`/api/check-progress?url=${encodeURIComponent(progressUrl)}`);
-        const data = await res.json();
-
-        if (data.status === "finished") {
-          clearInterval(interval);
-          setStatus("Success ✅");
-          showDownload(data.download_link);
-        } else if (data.status === "error") {
-          clearInterval(interval);
-          setStatus("Failed ❌");
-        }
-      }, 2000);
-    }
-
-    function showDownload(link) {
-      document.getElementById("downloadArea").innerHTML = `
-        <button class="download-btn" onclick="window.open('${link}')">Download MP4</button>
+      setStatus("Success ✅");
+      document.getElementById("result").innerHTML = `
+        <img src="${data.thumbnail}">
+        <h3>${data.title}</h3>
+        <button class="down" onclick="window.open('${data.mp4}')">Download MP4</button>
+        <button class="down" onclick="window.open('${data.mp3}')">Download MP3</button>
       `;
     }
 
